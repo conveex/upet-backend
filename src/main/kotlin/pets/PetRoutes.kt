@@ -1,5 +1,6 @@
 package com.cnvx.pets
 
+import com.cnvx.db.PetTable
 import io.ktor.server.response.*
 import io.ktor.server.request.*
 import io.ktor.http.*

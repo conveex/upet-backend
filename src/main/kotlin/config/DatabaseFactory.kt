@@ -1,7 +1,6 @@
 package com.cnvx.config
 
-import com.cnvx.owners.OwnerTable
-import com.cnvx.pets.PetTable
+import com.cnvx.db.*
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import org.jetbrains.exposed.sql.Database
@@ -17,7 +16,16 @@ object DatabaseFactory {
         transaction {
             SchemaUtils.createMissingTablesAndColumns(
                 OwnerTable,
-                PetTable
+                WalkerTable,
+                PetTable,
+                AvailabilityTable,
+                RouteTable,
+                RoutePointTable,
+                WalkTable,
+                WalkPetTable,
+                CheckPhotoTable,
+                RatingTable,
+                PaymentTable
             )
         }
     }

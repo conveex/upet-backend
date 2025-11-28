@@ -6,6 +6,7 @@ import com.cnvx.auth.OwnerResponse
 import com.cnvx.auth.PasswordHasher
 import com.cnvx.auth.RegisterOwnerRequest
 import com.cnvx.config.JwtConfig
+import com.cnvx.db.OwnerTable
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.auth.authenticate
 import io.ktor.server.auth.jwt.JWTPrincipal
