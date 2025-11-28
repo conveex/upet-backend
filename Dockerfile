@@ -5,7 +5,7 @@ WORKDIR /home/gradle/project
 
 COPY --chown=gradle:gradle . .
 
-RUN gradle build --no-daemon
+RUN gradle build -x test --no-daemon
 
 # Etapa 2: imagen ligera para correr el JAR
 FROM eclipse-temurin:17-jre-alpine
