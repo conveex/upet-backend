@@ -15,7 +15,7 @@ object RouteTable : Table("routes") {
 
     // type: DISTANCE, TIME, A_B → lo dejamos como text y lo validamos en app
     val type = text("type")
-    val source = text("source")
+    val routeSource = text("source")
 
     // En lugar de jsonb, para simplificar: text nullable
     val requestParams = text("request_params").nullable()
