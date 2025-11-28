@@ -1,5 +1,5 @@
 # Etapa 1: build con Gradle
-FROM gradle:8.9-jdk17-alpine AS build
+FROM gradle:8.11-jdk17-alpine AS build
 
 WORKDIR /home/gradle/project
 
