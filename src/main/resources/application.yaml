@@ -4,7 +4,14 @@ ktor:
       - com.upet.ApplicationKt.module
   deployment:
     port: 8080
+    host: 0.0.0.0
+
 jwt:
-  domain: "https://jwt-provider-domain/"
-  audience: "jwt-audience"
-  realm: "ktor sample app"
+  domain: "https://upet-api.cnvx.com/"
+  audience: "upet-clients"
+  realm: "upet-app"
+
+database:
+  url: "jdbc:postgresql://dpg-d4qhiafdiees739ap4v0-a.oregon-postgres.render.com:5432/upet_db_z54t?sslmode=require"
+  user: "convex"
+  password: "bou9UIJDDLTGUq6zvfre3JsobjYDEljp"
