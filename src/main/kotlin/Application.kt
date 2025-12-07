@@ -2,6 +2,7 @@ package com.upet
 
 import com.upet.config.configureCors
 import com.upet.config.configureDatabase
+import com.upet.config.configureFirebase
 import com.upet.config.configureMonitoring
 import com.upet.config.configureRouting
 import com.upet.config.configureSecurity
@@ -18,5 +19,6 @@ fun Application.module() {
     configureCors()
     configureSecurity()
     configureDatabase()
+    configureFirebase()
     configureRouting()
 }

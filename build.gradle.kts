@@ -53,6 +53,8 @@ dependencies {
 
     testImplementation("io.ktor:ktor-server-test-host")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version")
+
+    implementation("com.auth0:java-jwt:4.4.0")
 }
 
 ktor {

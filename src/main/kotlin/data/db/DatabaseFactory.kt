@@ -1,6 +1,9 @@
 package com.upet.data.db
 
+import com.upet.data.db.tables.PaymentMethodsTable
+import com.upet.data.db.tables.PetsTable
 import com.upet.data.db.tables.UsersTable
+import com.upet.data.db.tables.WalkerProfilesTable
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import org.flywaydb.core.Flyway
@@ -37,7 +40,12 @@ object DatabaseFactory {
         Database.connect(dataSource)
 
         transaction {
-            SchemaUtils.createMissingTablesAndColumns(UsersTable)
+            SchemaUtils.createMissingTablesAndColumns(
+                UsersTable,
+                WalkerProfilesTable,
+                PetsTable,
+                PaymentMethodsTable
+            )
         }
     }
 }

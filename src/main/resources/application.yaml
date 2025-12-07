@@ -2,7 +2,8 @@ ktor:
   application:
     modules:
       - com.upet.ApplicationKt.module
-  deployment:
+  deployment: #Se hace toggle de los puertos, 8080 para tests locales variable para render
+    #port: 8080
     port: ${?PORT}
     host: 0.0.0.0
 
