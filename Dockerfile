@@ -8,7 +8,7 @@ COPY --chown=gradle:gradle . .
 
 # Construimos un fat JAR (incluye todas las dependencias)
 # Si el plugin de Ktor genera la tarea `fatJar`, usamos esa
-RUN ./gradlew clean buildFatJar -x test --no-daemon
+RUN gradle clean buildFatJar -x test --no-daemon
 
 # Etapa 2: imagen ligera para correr el JAR
 FROM eclipse-temurin:17-jre-alpine
