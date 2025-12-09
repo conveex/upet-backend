@@ -40,7 +40,7 @@ class UserRepository {
             .selectAll().where { UsersTable.email.lowerCase() eq email.lowercase() }
             .limit(1)
             .firstOrNull()
-            ?.let(::rowToUser )
+            ?.let(::rowToUser)
     }
 
     fun findById(id: UUID): User? = transaction {
@@ -123,12 +123,72 @@ class UserRepository {
             row[UsersTable.updatedAt] = now
         }
 
-        if(updated == 0) return@transaction null
+        if (updated == 0) return@transaction null
 
         UsersTable
             .selectAll().where { UsersTable.id eq id }
             .limit(1)
             .firstOrNull()
             ?.let(::rowToUser)
+    }
+
+    fun updatePhoto(userId: UUID, newPhotoUrl: String?): User? = transaction {
+        val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
+
+        val updatedRows = UsersTable.update({ UsersTable.id eq userId }) { row ->
+            row[UsersTable.photoUrl] = newPhotoUrl
+            row[UsersTable.updatedAt] = now
+        }
+
+        if (updatedRows == 0) {
+            null
+        } else {
+            UsersTable
+                .selectAll().where { UsersTable.id eq userId }
+                .limit(1)
+                .firstOrNull()
+                ?.let(::rowToUser)
+        }
+    }
+
+    fun updateProfile(userId: UUID, request: UpdateUserProfileRequest): User? = transaction {
+        val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
+
+        val updatedRows = UsersTable.update({ UsersTable.id eq userId }) { row ->
+            request.name?.let { row[UsersTable.name] = it }
+            request.phone?.let { row[UsersTable.phone] = it }
+            request.mainAddress?.let { row[UsersTable.mainAddress] = it }
+            row[UsersTable.updatedAt] = now
+        }
+
+        if (updatedRows == 0) {
+            null
+        } else {
+            UsersTable
+                .selectAll().where { UsersTable.id eq userId }
+                .limit(1)
+                .firstOrNull()
+                ?.let(::rowToUser)
+        }
+    }
+
+    fun softDelete(userId: UUID): User? = transaction {
+        val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
+
+        val updatedRows = UsersTable.update({ UsersTable.id eq userId }) { row ->
+            row[UsersTable.status] = UserStatus.INACTIVE
+            row[UsersTable.fcmToken] = null
+            row[UsersTable.updatedAt] = now
+        }
+
+        if (updatedRows == 0) {
+            null
+        } else {
+            UsersTable
+                .selectAll().where { UsersTable.id eq userId }
+                .limit(1)
+                .firstOrNull()
+                ?.let(::rowToUser)
+        }
     }
 }
