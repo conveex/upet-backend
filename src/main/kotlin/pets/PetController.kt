@@ -12,12 +12,25 @@ class PetController(
     suspend fun createPet(call: ApplicationCall, ownerId: UUID) {
         val request = call.receive<CreatePetRequest>()
         val pet = petService.createPet(ownerId, request)
-        call.respond(HttpStatusCode.Created, mapOf("success" to true, "pet" to pet))
+        call.respond(
+            HttpStatusCode.Created,
+            PetEnvelope(
+                success = true,
+                message = "Mascota creada correctamente.",
+                pet = pet
+            )
+        )
     }
 
     suspend fun getMyPets(call: ApplicationCall, ownerId: UUID) {
         val pets = petService.getMyPets(ownerId)
-        call.respond(HttpStatusCode.OK, pets)
+        call.respond(
+            HttpStatusCode.OK,
+            PetListEnvelope(
+                success = true,
+                pets = pets
+            )
+        )
     }
 
     suspend fun getPetById(call: ApplicationCall, ownerId: UUID, petId: UUID) {
@@ -25,10 +38,21 @@ class PetController(
         if (pet == null) {
             call.respond(
                 HttpStatusCode.NotFound,
-                mapOf("success" to false, "message" to "Mascota no encontrada.")
+                PetEnvelope(
+                    success = false,
+                    message = "Mascota no encontrada.",
+                    pet = null
+                )
             )
         } else {
-            call.respond(HttpStatusCode.OK, pet)
+            call.respond(
+                HttpStatusCode.OK,
+                PetEnvelope(
+                    success = true,
+                    message = "Mascota encontrada.",
+                    pet = pet
+                )
+            )
         }
     }
 
@@ -38,10 +62,21 @@ class PetController(
         if (pet == null) {
             call.respond(
                 HttpStatusCode.NotFound,
-                mapOf("success" to false, "message" to "Mascota no encontrada.")
+                PetEnvelope(
+                    success = false,
+                    message = "Mascota no encontrada.",
+                    pet = null
+                )
             )
         } else {
-            call.respond(HttpStatusCode.OK, pet)
+            call.respond(
+                HttpStatusCode.OK,
+                PetEnvelope(
+                    success = true,
+                    message = "Mascota actualizada correctamente.",
+                    pet = pet
+                )
+            )
         }
     }
 
@@ -50,12 +85,20 @@ class PetController(
         if (!deleted) {
             call.respond(
                 HttpStatusCode.NotFound,
-                mapOf("success" to false, "message" to "Mascota no encontrada.")
+                PetEnvelope(
+                    success = false,
+                    message = "Mascota no encontrada.",
+                    pet = null
+                )
             )
         } else {
             call.respond(
                 HttpStatusCode.OK,
-                mapOf("success" to true, "message" to "Mascota eliminada correctamente.")
+                PetEnvelope(
+                    success = true,
+                    message = "Mascota eliminada correctamente.",
+                    pet = null
+                )
             )
         }
     }

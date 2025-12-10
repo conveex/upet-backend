@@ -1,6 +1,7 @@
 package com.upet.pets
 
 import com.upet.domain.model.PetSize
+import kotlinx.datetime.LocalDateTime
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -16,8 +17,8 @@ data class PetResponse(
     val behavior: String? = null,
     val specialConditions: String? = null,
     val photoUrl: String? = null,
-    val createdAt: kotlinx.datetime.LocalDateTime,
-    val updatedAt: kotlinx.datetime.LocalDateTime
+    val createdAt: LocalDateTime,
+    val updatedAt: LocalDateTime
 )
 
 @Serializable
@@ -44,4 +45,17 @@ data class UpdatePetRequest(
     val behavior: String? = null,
     val specialConditions: String? = null,
     val photoUrl: String? = null
+)
+
+@Serializable
+data class PetEnvelope(
+    val success: Boolean,
+    val message: String,
+    val pet: PetResponse? = null
+)
+
+@Serializable
+data class PetListEnvelope(
+    val success: Boolean,
+    val pets: List<PetResponse>
 )
