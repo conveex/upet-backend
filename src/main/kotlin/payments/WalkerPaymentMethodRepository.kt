@@ -5,6 +5,7 @@ import com.upet.data.db.tables.WalkerPaymentMethodsTable
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import org.jetbrains.exposed.sql.JoinType
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.deleteWhere
@@ -15,9 +16,15 @@ import java.util.UUID
 
 class WalkerPaymentMethodRepository {
     fun listForUser(userId: UUID): List<UserPaymentMethodResponse> = transaction {
-        (WalkerPaymentMethodsTable innerJoin PaymentMethodsTable)
-            .selectAll()
-            .where { WalkerPaymentMethodsTable.userId eq userId }
+        WalkerPaymentMethodsTable
+            .join(
+                PaymentMethodsTable,
+                JoinType.INNER,
+                additionalConstraint = {
+                    WalkerPaymentMethodsTable.paymentMethodId eq PaymentMethodsTable.id
+                }
+            )
+            .selectAll().where { WalkerPaymentMethodsTable.userId eq userId }
             .map { row ->
                 UserPaymentMethodResponse(
                     id = row[WalkerPaymentMethodsTable.id].toString(),

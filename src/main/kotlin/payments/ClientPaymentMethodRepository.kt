@@ -5,6 +5,7 @@ import com.upet.data.db.tables.PaymentMethodsTable
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import org.jetbrains.exposed.sql.JoinType
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.deleteWhere
@@ -15,9 +16,15 @@ import java.util.UUID
 
 class ClientPaymentMethodRepository {
     fun listForUser(userId: UUID): List<UserPaymentMethodResponse> = transaction {
-        (ClientPaymentMethodsTable innerJoin PaymentMethodsTable)
-            .selectAll()
-            .where { ClientPaymentMethodsTable.userId eq userId }
+        ClientPaymentMethodsTable
+            .join(
+                PaymentMethodsTable,
+                JoinType.INNER,
+                additionalConstraint = {
+                    ClientPaymentMethodsTable.paymentMethodId eq PaymentMethodsTable.id
+                }
+            )
+            .selectAll().where { ClientPaymentMethodsTable.userId eq userId }
             .map { row ->
                 UserPaymentMethodResponse(
                     id = row[ClientPaymentMethodsTable.id].toString(),
