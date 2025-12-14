@@ -26,21 +26,21 @@ fun Route.walkRoutes(controller: WalkController) {
                 val principal = call.principal<JWTPrincipal>()
                     ?: return@post call.respond(
                         HttpStatusCode.Unauthorized,
-                        mapOf("success" to false, "message" to "Token inválido.")
+                        ApiErrorResponse(message = "Token inválido.")
                     )
 
                 val userId = principal.getClaim("user_id", String::class)
                     ?.let(UUID::fromString)
                     ?: return@post call.respond(
                         HttpStatusCode.BadRequest,
-                        mapOf("success" to false, "message" to "Token sin user_id.")
+                        ApiErrorResponse(message = "Token sin user_id.")
                     )
 
                 val isClient = principal.getClaim("isClient", Boolean::class) ?: false
                 if (!isClient) {
                     return@post call.respond(
                         HttpStatusCode.Forbidden,
-                        mapOf("success" to false, "message" to "Solo los clientes pueden crear paseos.")
+                        ApiErrorResponse(message = "Solo los clientes pueden crear paseos.")
                     )
                 }
 
@@ -50,17 +50,23 @@ fun Route.walkRoutes(controller: WalkController) {
             // Listado simple
             get("pending") {
                 val principal = call.principal<JWTPrincipal>()
-                    ?: return@get call.respond(HttpStatusCode.Unauthorized)
+                    ?: return@get call.respond(
+                        HttpStatusCode.Unauthorized,
+                        ApiErrorResponse(message = "Token inválido.")
+                    )
 
                 val userId = principal.getClaim("user_id", String::class)
                     ?.let(UUID::fromString)
-                    ?: return@get call.respond(HttpStatusCode.BadRequest)
+                    ?: return@get call.respond(
+                        HttpStatusCode.BadRequest,
+                        ApiErrorResponse(message = "Token sin user_id.")
+                    )
 
                 val isClient = principal.getClaim("isClient", Boolean::class) ?: false
                 if (!isClient) {
                     return@get call.respond(
                         HttpStatusCode.Forbidden,
-                        mapOf("success" to false, "message" to "Solo los clientes pueden listar sus paseos pendientes.")
+                        ApiErrorResponse(message = "Solo los clientes pueden listar sus paseos pendientes.")
                     )
                 }
 
@@ -70,30 +76,36 @@ fun Route.walkRoutes(controller: WalkController) {
             // Detalle
             get("{id}") {
                 val principal = call.principal<JWTPrincipal>()
-                    ?: return@get call.respond(HttpStatusCode.Unauthorized)
+                    ?: return@get call.respond(
+                        HttpStatusCode.Unauthorized,
+                        ApiErrorResponse(message = "Token inválido.")
+                    )
 
                 val userId = principal.getClaim("user_id", String::class)
                     ?.let(UUID::fromString)
-                    ?: return@get call.respond(HttpStatusCode.BadRequest)
+                    ?: return@get call.respond(
+                        HttpStatusCode.BadRequest,
+                        ApiErrorResponse(message = "Token sin user_id.")
+                    )
 
                 val isClient = principal.getClaim("isClient", Boolean::class) ?: false
                 if (!isClient) {
                     return@get call.respond(
                         HttpStatusCode.Forbidden,
-                        mapOf("success" to false, "message" to "Solo los clientes pueden ver detalle de sus paseos.")
+                        ApiErrorResponse(message = "Solo los clientes pueden ver detalle de sus paseos.")
                     )
                 }
 
                 val walkIdParam = call.parameters["id"]
                     ?: return@get call.respond(
                         HttpStatusCode.BadRequest,
-                        mapOf("success" to false, "message" to "ID de paseo faltante.")
+                        ApiErrorResponse(message = "ID de paseo faltante.")
                     )
 
                 val walkId = runCatching { UUID.fromString(walkIdParam) }.getOrNull()
                     ?: return@get call.respond(
                         HttpStatusCode.BadRequest,
-                        mapOf("success" to false, "message" to "ID de paseo inválido.")
+                        ApiErrorResponse(message = "ID de paseo inválido.")
                     )
 
                 controller.getWalkDetail(call, userId, walkId)
@@ -101,30 +113,36 @@ fun Route.walkRoutes(controller: WalkController) {
 
             delete("{id}") {
                 val principal = call.principal<JWTPrincipal>()
-                    ?: return@delete call.respond(HttpStatusCode.Unauthorized)
+                    ?: return@delete call.respond(
+                        HttpStatusCode.Unauthorized,
+                        ApiErrorResponse(message = "Token inválido.")
+                    )
 
                 val userId = principal.getClaim("user_id", String::class)
                     ?.let(UUID::fromString)
-                    ?: return@delete call.respond(HttpStatusCode.BadRequest)
+                    ?: return@delete call.respond(
+                        HttpStatusCode.BadRequest,
+                        ApiErrorResponse(message = "Token sin user_id.")
+                    )
 
                 val isClient = principal.getClaim("isClient", Boolean::class) ?: false
                 if (!isClient) {
                     return@delete call.respond(
                         HttpStatusCode.Forbidden,
-                        mapOf("success" to false, "message" to "Solo los clientes pueden cancelar paseos.")
+                        ApiErrorResponse(message = "Solo los clientes pueden cancelar paseos.")
                     )
                 }
 
                 val walkIdParam = call.parameters["id"]
                     ?: return@delete call.respond(
                         HttpStatusCode.BadRequest,
-                        mapOf("success" to false, "message" to "ID de paseo faltante.")
+                        ApiErrorResponse(message = "ID de paseo faltante.")
                     )
 
                 val walkId = runCatching { UUID.fromString(walkIdParam) }.getOrNull()
                     ?: return@delete call.respond(
                         HttpStatusCode.BadRequest,
-                        mapOf("success" to false, "message" to "ID de paseo inválido.")
+                        ApiErrorResponse(message = "ID de paseo inválido.")
                     )
 
                 controller.cancelWalk(call, userId, walkId)
