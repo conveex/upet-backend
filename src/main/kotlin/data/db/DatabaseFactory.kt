@@ -4,8 +4,11 @@ import com.upet.data.db.tables.ClientPaymentMethodsTable
 import com.upet.data.db.tables.PaymentMethodsTable
 import com.upet.data.db.tables.PetsTable
 import com.upet.data.db.tables.UsersTable
+import com.upet.data.db.tables.WalkPaymentMethodsTable
+import com.upet.data.db.tables.WalkPetsTable
 import com.upet.data.db.tables.WalkerPaymentMethodsTable
 import com.upet.data.db.tables.WalkerProfilesTable
+import com.upet.data.db.tables.WalksTable
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import org.flywaydb.core.Flyway
@@ -48,7 +51,10 @@ object DatabaseFactory {
                 PetsTable,
                 PaymentMethodsTable,
                 ClientPaymentMethodsTable,
-                WalkerPaymentMethodsTable
+                WalkerPaymentMethodsTable,
+                WalksTable,
+                WalkPaymentMethodsTable,
+                WalkPetsTable
             )
         }
     }

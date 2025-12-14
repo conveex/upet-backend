@@ -55,6 +55,10 @@ dependencies {
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version")
 
     implementation("com.auth0:java-jwt:4.4.0")
+
+    implementation("io.ktor:ktor-client-core")
+    implementation("io.ktor:ktor-client-cio")
+    implementation("io.ktor:ktor-network-tls")
 }
 
 ktor {

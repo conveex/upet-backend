@@ -17,7 +17,8 @@ class ClientPaymentMethodsController(
                 HttpStatusCode.Unauthorized,
                 UserPaymentMethodsEnvelope(
                     success = false,
-                    message = "No se encontró el token de autenticación."
+                    message = "No se encontró el token de autenticación.",
+                    methods = emptyList()
                 )
             )
             return
@@ -29,7 +30,8 @@ class ClientPaymentMethodsController(
                 HttpStatusCode.Forbidden,
                 UserPaymentMethodsEnvelope(
                     success = false,
-                    message = "Solo los clientes pueden gestionar métodos de pago de cliente."
+                    message = "Solo los clientes pueden gestionar métodos de pago de cliente.",
+                    methods = emptyList()
                 )
             )
             return
@@ -43,7 +45,8 @@ class ClientPaymentMethodsController(
                 HttpStatusCode.BadRequest,
                 UserPaymentMethodsEnvelope(
                     success = false,
-                    message = "user_id del token no es un UUID válido."
+                    message = "user_id del token no es un UUID válido.",
+                    methods = emptyList()
                 )
             )
             return
@@ -66,7 +69,8 @@ class ClientPaymentMethodsController(
                 HttpStatusCode.Unauthorized,
                 UserPaymentMethodsEnvelope(
                     success = false,
-                    message = "No se encontró el token de autenticación."
+                    message = "No se encontró el token de autenticación.",
+                    methods = emptyList()
                 )
             )
             return
@@ -78,7 +82,8 @@ class ClientPaymentMethodsController(
                 HttpStatusCode.Forbidden,
                 UserPaymentMethodsEnvelope(
                     success = false,
-                    message = "Solo los clientes pueden gestionar métodos de pago de cliente."
+                    message = "Solo los clientes pueden gestionar métodos de pago de cliente.",
+                    methods = emptyList()
                 )
             )
             return
@@ -92,7 +97,8 @@ class ClientPaymentMethodsController(
                 HttpStatusCode.BadRequest,
                 UserPaymentMethodsEnvelope(
                     success = false,
-                    message = "user_id del token no es un UUID válido."
+                    message = "user_id del token no es un UUID válido.",
+                    methods = emptyList()
                 )
             )
             return
@@ -105,7 +111,8 @@ class ClientPaymentMethodsController(
                 HttpStatusCode.BadRequest,
                 UserPaymentMethodsEnvelope(
                     success = false,
-                    message = "Body inválido para agregar método de pago."
+                    message = "Body inválido para agregar método de pago.",
+                    methods = emptyList()
                 )
             )
             return
@@ -118,7 +125,8 @@ class ClientPaymentMethodsController(
                 HttpStatusCode.BadRequest,
                 UserPaymentMethodsEnvelope(
                     success = false,
-                    message = "paymentMethodId no es un UUID válido."
+                    message = "paymentMethodId no es un UUID válido.",
+                    methods = emptyList()
                 )
             )
             return
@@ -146,7 +154,8 @@ class ClientPaymentMethodsController(
                 HttpStatusCode.Unauthorized,
                 UserPaymentMethodsEnvelope(
                     success = false,
-                    message = "No se encontró el token de autenticación."
+                    message = "No se encontró el token de autenticación.",
+                    methods = emptyList()
                 )
             )
             return
@@ -158,7 +167,8 @@ class ClientPaymentMethodsController(
                 HttpStatusCode.Forbidden,
                 UserPaymentMethodsEnvelope(
                     success = false,
-                    message = "Solo los clientes pueden gestionar métodos de pago de cliente."
+                    message = "Solo los clientes pueden gestionar métodos de pago de cliente.",
+                    methods = emptyList()
                 )
             )
             return
@@ -172,7 +182,8 @@ class ClientPaymentMethodsController(
                 HttpStatusCode.BadRequest,
                 UserPaymentMethodsEnvelope(
                     success = false,
-                    message = "user_id del token no es un UUID válido."
+                    message = "user_id del token no es un UUID válido.",
+                    methods = emptyList()
                 )
             )
             return
@@ -186,7 +197,8 @@ class ClientPaymentMethodsController(
                 HttpStatusCode.BadRequest,
                 UserPaymentMethodsEnvelope(
                     success = false,
-                    message = "methodId de ruta no es un UUID válido."
+                    message = "methodId de ruta no es un UUID válido.",
+                    methods = emptyList()
                 )
             )
             return

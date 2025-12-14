@@ -22,5 +22,5 @@ data class AddUserPaymentMethodRequest(
 data class UserPaymentMethodsEnvelope(
     val success: Boolean,
     val message: String,
-    val methods: List<UserPaymentMethodResponse> = emptyList()
+    val methods: List<UserPaymentMethodResponse>
 )

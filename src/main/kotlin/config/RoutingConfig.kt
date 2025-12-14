@@ -19,6 +19,7 @@ import com.upet.pets.petRoutes
 import com.upet.routes.dbHealthRoutes
 import com.upet.routes.firebaseHealthRoutes
 import com.upet.routes.healthRoutes
+import com.upet.routes.mapsHealthRoutes
 import com.upet.users.UserRepository
 import com.upet.users.UsersController
 import com.upet.users.userRoutes
@@ -27,10 +28,34 @@ import com.upet.walkers.WalkerProfileRepository
 import com.upet.walkers.WalkerSelfController
 import com.upet.walkers.walkerAdminRoutes
 import com.upet.walkers.walkerRoutes
+import com.upet.walks.DummyRouteProvider
+import com.upet.walks.GoogleDirectionsRouteProvider
+import com.upet.walks.RouteProvider
+import com.upet.walks.WalkController
+import com.upet.walks.WalkRepository
+import com.upet.walks.WalkService
+import com.upet.walks.walkRoutes
+import io.ktor.client.HttpClient
 import io.ktor.server.application.Application
 import io.ktor.server.routing.routing
 
-fun Application.configureRouting() {
+fun Application.configureRouting(httpClient: HttpClient) {
+    val apiKey = environment.config
+        .propertyOrNull("upet.googleMaps.apiKey")
+        ?.getString()
+
+    val useGoogle = environment.config
+        .propertyOrNull("upet.routes.provider")
+        ?.getString()
+        ?.equals("google", ignoreCase = true) == true
+
+    val routeProvider: RouteProvider =
+        if (useGoogle && !apiKey.isNullOrBlank()) {
+            GoogleDirectionsRouteProvider(httpClient, apiKey)
+        } else {
+            DummyRouteProvider()
+        }
+
     val userRepository = UserRepository()
     val walkerProfileRepository = WalkerProfileRepository()
     val jwtProvider = JwtProvider(environment.config)
@@ -53,10 +78,15 @@ fun Application.configureRouting() {
     val clientPaymentMethodsController = ClientPaymentMethodsController(clientPaymentMethodRepository)
     val walkerPaymentMethodsController = WalkerPaymentMethodsController(walkerPaymentMethodRepository)
 
+    val walkRepository = WalkRepository()
+    val walkService = WalkService(walkRepository, routeProvider)
+    val walkController = WalkController(walkService)
+
     routing {
         healthRoutes()
         dbHealthRoutes()
         firebaseHealthRoutes()
+        mapsHealthRoutes(routeProvider, !apiKey.isNullOrBlank())
 
         authRoutes(authController)
         walkerAdminRoutes(walkerAdminController)
@@ -68,5 +98,7 @@ fun Application.configureRouting() {
 
         clientPaymentMethodsRoutes(clientPaymentMethodsController)
         walkerPaymentMethodsRoutes(walkerPaymentMethodsController)
+
+        walkRoutes(walkController)
     }
 }
