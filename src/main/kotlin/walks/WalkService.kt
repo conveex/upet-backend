@@ -34,14 +34,27 @@ class WalkService(
             }
         }
 
+        val providerRequest = when (request.type) {
+            WalkType.TIME -> {
+                val half = (request.timeMinutes!! / 2).coerceAtLeast(1)
+                request.copy(timeMinutes = half)
+            }
+            WalkType.DISTANCE -> {
+                val half = (request.distanceKm!! / 2.0).coerceAtLeast(0.1)
+                request.copy(distanceKm = half)
+            }
+            else -> request
+        }
+
         val routes = try {
-            routeProvider.calculateRoutes(request)
+            routeProvider.calculateRoutes(providerRequest)
         } catch (e: Exception) {
             throw WalkValidationException(e.message ?: "No fue posible calcular rutas.")
         }
 
         return routes.map { r ->
-            val price = priceForDistanceKm(r.distanceKm)
+            val totalDistanceKm = r.distanceKm * 2.0
+            val price = priceForDistanceKm(totalDistanceKm) * 1.5
             r.copy(priceAmount = price, priceCurrency = "MXN")
         }
     }
