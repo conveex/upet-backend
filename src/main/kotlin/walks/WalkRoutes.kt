@@ -36,7 +36,7 @@ fun Route.walkRoutes(controller: WalkController) {
                         ApiErrorResponse(message = "Token sin user_id.")
                     )
 
-                val isClient = principal.getClaim("isClient", Boolean::class) ?: false
+                val isClient = principal.getClaim("is_client", Boolean::class) ?: false
                 if (!isClient) {
                     return@post call.respond(
                         HttpStatusCode.Forbidden,
@@ -62,7 +62,7 @@ fun Route.walkRoutes(controller: WalkController) {
                         ApiErrorResponse(message = "Token sin user_id.")
                     )
 
-                val isClient = principal.getClaim("isClient", Boolean::class) ?: false
+                val isClient = principal.getClaim("is_client", Boolean::class) ?: false
                 if (!isClient) {
                     return@get call.respond(
                         HttpStatusCode.Forbidden,
@@ -88,7 +88,7 @@ fun Route.walkRoutes(controller: WalkController) {
                         ApiErrorResponse(message = "Token sin user_id.")
                     )
 
-                val isClient = principal.getClaim("isClient", Boolean::class) ?: false
+                val isClient = principal.getClaim("is_client", Boolean::class) ?: false
                 if (!isClient) {
                     return@get call.respond(
                         HttpStatusCode.Forbidden,
@@ -125,7 +125,7 @@ fun Route.walkRoutes(controller: WalkController) {
                         ApiErrorResponse(message = "Token sin user_id.")
                     )
 
-                val isClient = principal.getClaim("isClient", Boolean::class) ?: false
+                val isClient = principal.getClaim("is_client", Boolean::class) ?: false
                 if (!isClient) {
                     return@delete call.respond(
                         HttpStatusCode.Forbidden,
