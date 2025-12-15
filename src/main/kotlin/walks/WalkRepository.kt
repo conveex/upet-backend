@@ -2,6 +2,7 @@ package com.upet.walks
 
 import com.upet.data.db.tables.WalkPaymentMethodsTable
 import com.upet.data.db.tables.WalkPetsTable
+import com.upet.data.db.tables.WalkerProfilesTable
 import com.upet.data.db.tables.WalksTable
 import com.upet.domain.model.WalkSource
 import com.upet.domain.model.WalkStatus
@@ -11,14 +12,16 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.SortOrder
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.and
-import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.update
 import java.util.UUID
+import kotlin.math.atan2
+import kotlin.math.cos
+import kotlin.math.sin
+import kotlin.math.sqrt
 
 private fun nowUtc(): LocalDateTime =
     Clock.System.now().toLocalDateTime(TimeZone.UTC)
@@ -211,5 +214,158 @@ class WalkRepository {
             .map { it[WalkPaymentMethodsTable.paymentMethodId] }
 
         rowToDetail(row, petIds, paymentIds)
+    }
+
+    private fun haversineDistanceKm(aLat: Double, aLng: Double, bLat: Double, bLng: Double): Double {
+        val r = 6371.0
+        val dLat = Math.toRadians(bLat - aLat)
+        val dLng = Math.toRadians(bLng - aLng)
+        val lat1 = Math.toRadians(aLat)
+        val lat2 = Math.toRadians(bLat)
+
+        val sinDLat = sin(dLat / 2.0)
+        val sinDLng = sin(dLng / 2.0)
+
+        val h = sinDLat * sinDLat + cos(lat1) * cos(lat2) * sinDLng * sinDLng
+        val c = 2.0 * atan2(sqrt(h), sqrt(1.0 - h))
+        return r * c
+    }
+
+    private fun walkStartPoint(row: ResultRow): LatLngDto? {
+        val pLat = row[WalksTable.pickupLat]
+        val pLng = row[WalksTable.pickupLng]
+        if (pLat != null && pLng != null) return LatLngDto(pLat, pLng)
+
+        val oLat = row[WalksTable.originLat]
+        val oLng = row[WalksTable.originLng]
+        if (oLat != null && oLng != null) return LatLngDto(oLat, oLng)
+
+        return null
+    }
+
+    private data class WalkerZone(
+        val centerLat: Double,
+        val centerLng: Double,
+        val radiusKm: Double,
+        val maxDogs: Int
+    )
+
+    private fun loadWalkerZone(walkerUserId: UUID): WalkerZone? {
+        val profile = WalkerProfilesTable
+            .selectAll()
+            .where { WalkerProfilesTable.userId eq walkerUserId }
+            .singleOrNull() ?: return null
+
+        return WalkerZone(
+            centerLat = profile[WalkerProfilesTable.serviceCenterLat],
+            centerLng = profile[WalkerProfilesTable.serviceCenterLng],
+            radiusKm = profile[WalkerProfilesTable.zoneRadiusKm],
+            maxDogs = profile[WalkerProfilesTable.maxDogs]
+        )
+    }
+
+    private fun walkDogCount(walkId: UUID): Int =
+        WalkPetsTable.selectAll().where { WalkPetsTable.walkId eq walkId }.count().toInt()
+
+    private fun isWalkAvailableForWalker(zone: WalkerZone, walkRow: ResultRow): Boolean {
+        val walkId = walkRow[WalksTable.id]
+
+        // Capacidad
+        val dogs = walkDogCount(walkId)
+        if (dogs > zone.maxDogs) return false
+
+        // Zona
+        val start = walkStartPoint(walkRow) ?: return false
+        val distKm = haversineDistanceKm(zone.centerLat, zone.centerLng, start.lat, start.lng)
+        if (distKm > zone.radiusKm) return false
+
+        return true
+    }
+
+    fun findAvailableSummariesForWalker(walkerUserId: UUID): List<WalkSummaryResponse> = transaction {
+        val zone = loadWalkerZone(walkerUserId) ?: return@transaction emptyList()
+
+        WalksTable
+            .selectAll()
+            .where { (WalksTable.status eq WalkStatus.PENDING) and (WalksTable.walkerId eq null) }
+            .orderBy(WalksTable.requestedStartTime, SortOrder.ASC)
+            .filter { row -> isWalkAvailableForWalker(zone, row) }
+            .map { row ->
+                WalkSummaryResponse(
+                    id = row[WalksTable.id].toString(),
+                    type = row[WalksTable.type],
+                    status = row[WalksTable.status],
+                    requestedStartTime = row[WalksTable.requestedStartTime],
+                    estimatedDistanceMeters = row[WalksTable.estimatedDistanceMeters],
+                    estimatedDurationSeconds = row[WalksTable.estimatedDurationSeconds],
+                    priceAmount = row[WalksTable.priceAmount],
+                    priceCurrency = row[WalksTable.priceCurrency]
+                )
+            }
+    }
+
+    fun findAvailableWalkDetailForWalker(walkerUserId: UUID, walkId: UUID): WalkDetailResponse? = transaction {
+        val zone = loadWalkerZone(walkerUserId) ?: return@transaction null
+
+        val row = WalksTable
+            .selectAll()
+            .where { (WalksTable.id eq walkId) and (WalksTable.status eq WalkStatus.PENDING) and (WalksTable.walkerId eq null) }
+            .singleOrNull() ?: return@transaction null
+
+        if (!isWalkAvailableForWalker(zone, row)) return@transaction null
+
+        val petIds = WalkPetsTable.selectAll().where { WalkPetsTable.walkId eq walkId }.map { it[WalkPetsTable.petId] }
+        val paymentIds = WalkPaymentMethodsTable.selectAll().where { WalkPaymentMethodsTable.walkId eq walkId }
+            .map { it[WalkPaymentMethodsTable.paymentMethodId] }
+
+        rowToDetail(row, petIds, paymentIds)
+    }
+
+    fun acceptWalk(
+        walkerUserId: UUID,
+        walkId: UUID,
+        agreedPaymentMethodId: UUID
+    ): WalkDetailResponse? = transaction {
+        val zone = loadWalkerZone(walkerUserId) ?: return@transaction null
+        val now = nowUtc()
+
+        val row = WalksTable
+            .selectAll()
+            .where { (WalksTable.id eq walkId) and (WalksTable.status eq WalkStatus.PENDING) and (WalksTable.walkerId eq null) }
+            .singleOrNull() ?: return@transaction null
+
+        if (!isWalkAvailableForWalker(zone, row)) return@transaction null
+
+        val allowed = WalkPaymentMethodsTable
+            .selectAll()
+            .where { (WalkPaymentMethodsTable.walkId eq walkId) and (WalkPaymentMethodsTable.paymentMethodId eq agreedPaymentMethodId) }
+            .any()
+
+        if (!allowed) return@transaction null
+
+        val updated = WalksTable.update(
+            where = {
+                (WalksTable.id eq walkId) and
+                        (WalksTable.status eq WalkStatus.PENDING) and
+                        (WalksTable.walkerId eq null)
+            }
+        ) { w ->
+            w[WalksTable.walkerId] = walkerUserId
+            w[WalksTable.status] = WalkStatus.ACCEPTED
+            w[WalksTable.agreedPaymentMethodId] = agreedPaymentMethodId
+
+            w[WalksTable.chatThreadId] = walkId.toString()
+
+            w[WalksTable.updatedAt] = now
+        }
+
+        if (updated == 0) return@transaction null
+
+        val updatedRow = WalksTable.selectAll().where { WalksTable.id eq walkId }.singleOrNull() ?: return@transaction null
+        val petIds = WalkPetsTable.selectAll().where { WalkPetsTable.walkId eq walkId }.map { it[WalkPetsTable.petId] }
+        val paymentIds = WalkPaymentMethodsTable.selectAll().where { WalkPaymentMethodsTable.walkId eq walkId }
+            .map { it[WalkPaymentMethodsTable.paymentMethodId] }
+
+        rowToDetail(updatedRow, petIds, paymentIds)
     }
 }

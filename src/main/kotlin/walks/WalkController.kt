@@ -86,4 +86,43 @@ class WalkController(
             )
         }
     }
+
+    suspend fun getAvailableWalksForWalker(call: ApplicationCall, walkerUserId: UUID) {
+        val walks = walkService.getAvailableSummariesForWalker(walkerUserId)
+        call.respond(
+            HttpStatusCode.OK,
+            WalkSummaryListEnvelope(success = true, walks = walks)
+        )
+    }
+
+    suspend fun getAvailableWalkDetailForWalker(call: ApplicationCall, walkerUserId: UUID, walkId: UUID) {
+        val walk = walkService.getAvailableWalkDetailForWalker(walkerUserId, walkId)
+        if (walk == null) {
+            call.respond(
+                HttpStatusCode.NotFound,
+                WalkEnvelope(success = false, message = "Paseo no disponible o no encontrado.", walk = null)
+            )
+        } else {
+            call.respond(
+                HttpStatusCode.OK,
+                WalkEnvelope(success = true, message = "Detalle del paseo disponible.", walk = walk)
+            )
+        }
+    }
+
+    suspend fun acceptWalk(call: ApplicationCall, walkerUserId: UUID, walkId: UUID) {
+        try {
+            val request = call.receive<AcceptWalkRequest>()
+            val walk = walkService.acceptWalk(walkerUserId, walkId, request)
+            call.respond(
+                HttpStatusCode.OK,
+                WalkEnvelope(success = true, message = "Paseo aceptado correctamente.", walk = walk)
+            )
+        } catch (e: WalkValidationException) {
+            call.respond(
+                HttpStatusCode.BadRequest,
+                ApiErrorResponse(message = e.message ?: "No fue posible aceptar el paseo.")
+            )
+        }
+    }
 }

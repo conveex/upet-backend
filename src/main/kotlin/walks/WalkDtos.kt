@@ -65,6 +65,11 @@ data class CreateWalkRequest(
 )
 
 @Serializable
+data class AcceptWalkRequest(
+    val agreedPaymentMethodId: String
+)
+
+@Serializable
 data class WalkSummaryResponse(
     val id: String,
     val type: WalkType,

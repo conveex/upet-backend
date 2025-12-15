@@ -1,6 +1,8 @@
 package com.upet.walks
 
 import com.upet.domain.model.WalkType
+import com.upet.notifications.NotificationService
+import com.upet.users.UsersFcmRepository
 import java.util.UUID
 import kotlin.math.roundToInt
 
@@ -8,7 +10,9 @@ class WalkValidationException(message: String) : RuntimeException(message)
 
 class WalkService(
     private val walkRepository: WalkRepository,
-    private val routeProvider: RouteProvider
+    private val routeProvider: RouteProvider,
+    private val usersFcmRepository: UsersFcmRepository,
+    private val notificationService: NotificationService
 ) {
     private val baseFareMxn = 25.0
     private val perKmMxn = 12.0
@@ -107,4 +111,37 @@ class WalkService(
 
     fun cancelPendingWalk(clientId: UUID, walkId: UUID): WalkDetailResponse? =
         walkRepository.cancelPendingWalk(clientId, walkId)
+
+    fun getAvailableSummariesForWalker(walkerUserId: UUID): List<WalkSummaryResponse> =
+        walkRepository.findAvailableSummariesForWalker(walkerUserId)
+
+    fun getAvailableWalkDetailForWalker(walkerUserId: UUID, walkId: UUID): WalkDetailResponse? =
+        walkRepository.findAvailableWalkDetailForWalker(walkerUserId, walkId)
+
+    fun acceptWalk(walkerUserId: UUID, walkId: UUID, request: AcceptWalkRequest): WalkDetailResponse {
+        val pmId = runCatching { UUID.fromString(request.agreedPaymentMethodId) }.getOrNull()
+            ?: throw WalkValidationException("agreedPaymentMethodId inválido.")
+
+        val accepted = walkRepository.acceptWalk(
+            walkerUserId = walkerUserId,
+            walkId = walkId,
+            agreedPaymentMethodId = pmId
+        ) ?: throw WalkValidationException("El paseo ya no está disponible, o no cumple zona/capacidad, o el método no es permitido.")
+
+        val clientId = runCatching { UUID.fromString(accepted.clientId) }.getOrNull()
+        if (clientId != null) {
+            val token = usersFcmRepository.getFcmToken(clientId)
+            notificationService.sendPush(
+                token = token,
+                title = "Paseo aceptado",
+                body = "Un paseador aceptó tu paseo.",
+                data = mapOf(
+                    "type" to "WALK_ACCEPTED",
+                    "walkId" to accepted.id
+                )
+            )
+        }
+
+        return accepted
+    }
 }

@@ -35,3 +35,14 @@ data class UserProfileEnvelope(
     val message: String,
     val user: UserProfileResponse?
 )
+
+@Serializable
+data class UpdateFcmTokenRequest(
+    val token: String
+)
+
+@Serializable
+data class SimpleEnvelope(
+    val success: Boolean,
+    val message: String
+)

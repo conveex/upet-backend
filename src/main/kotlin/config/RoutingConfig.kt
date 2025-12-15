@@ -4,6 +4,7 @@ import com.upet.auth.AuthController
 import com.upet.auth.AuthService
 import com.upet.auth.JwtProvider
 import com.upet.auth.authRoutes
+import com.upet.notifications.NotificationService
 import com.upet.payments.ClientPaymentMethodRepository
 import com.upet.payments.ClientPaymentMethodsController
 import com.upet.payments.PaymentMethodRepository
@@ -22,6 +23,9 @@ import com.upet.routes.healthRoutes
 import com.upet.routes.mapsHealthRoutes
 import com.upet.users.UserRepository
 import com.upet.users.UsersController
+import com.upet.users.UsersFcmController
+import com.upet.users.UsersFcmRepository
+import com.upet.users.userFcmRoutes
 import com.upet.users.userRoutes
 import com.upet.walkers.WalkerAdminController
 import com.upet.walkers.WalkerProfileRepository
@@ -78,8 +82,12 @@ fun Application.configureRouting(httpClient: HttpClient) {
     val clientPaymentMethodsController = ClientPaymentMethodsController(clientPaymentMethodRepository)
     val walkerPaymentMethodsController = WalkerPaymentMethodsController(walkerPaymentMethodRepository)
 
+    val usersFcmRepository = UsersFcmRepository()
+    val usersFcmController = UsersFcmController(usersFcmRepository)
+    val notificationService = NotificationService()
+
     val walkRepository = WalkRepository()
-    val walkService = WalkService(walkRepository, routeProvider)
+    val walkService = WalkService(walkRepository, routeProvider, usersFcmRepository, notificationService)
     val walkController = WalkController(walkService)
 
     routing {
@@ -94,6 +102,7 @@ fun Application.configureRouting(httpClient: HttpClient) {
 
         petRoutes(petController)
         userRoutes(usersController)
+        userFcmRoutes(usersFcmController)
         walkerRoutes(walkerSelfController, userRepository)
 
         clientPaymentMethodsRoutes(clientPaymentMethodsController)
