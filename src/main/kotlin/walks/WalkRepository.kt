@@ -12,9 +12,11 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.SortOrder
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.coalesce
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.selectAll
+import org.jetbrains.exposed.sql.stringLiteral
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.update
 import java.util.UUID
@@ -367,5 +369,114 @@ class WalkRepository {
             .map { it[WalkPaymentMethodsTable.paymentMethodId] }
 
         rowToDetail(updatedRow, petIds, paymentIds)
+    }
+
+    fun findActiveSummariesByClient(clientId: UUID): List<WalkSummaryResponse> = transaction {
+        val activeStatuses = listOf(
+            WalkStatus.ACCEPTED,
+            WalkStatus.STARTED,
+            WalkStatus.WALKER_FINISHED
+        )
+
+        WalksTable
+            .selectAll()
+            .where { (WalksTable.clientId eq clientId) and (WalksTable.status inList activeStatuses) }
+            .orderBy(WalksTable.requestedStartTime, SortOrder.ASC)
+            .map { row ->
+                WalkSummaryResponse(
+                    id = row[WalksTable.id].toString(),
+                    type = row[WalksTable.type],
+                    status = row[WalksTable.status],
+                    requestedStartTime = row[WalksTable.requestedStartTime],
+                    estimatedDistanceMeters = row[WalksTable.estimatedDistanceMeters],
+                    estimatedDurationSeconds = row[WalksTable.estimatedDurationSeconds],
+                    priceAmount = row[WalksTable.priceAmount],
+                    priceCurrency = row[WalksTable.priceCurrency]
+                )
+            }
+    }
+
+    fun findActiveSummariesByWalker(walkerUserId: UUID): List<WalkSummaryResponse> = transaction {
+        val activeStatuses = listOf(
+            WalkStatus.ACCEPTED,
+            WalkStatus.STARTED,
+            WalkStatus.WALKER_FINISHED
+        )
+
+        WalksTable
+            .selectAll()
+            .where { (WalksTable.walkerId eq walkerUserId) and (WalksTable.status inList activeStatuses) }
+            .orderBy(WalksTable.requestedStartTime, SortOrder.ASC)
+            .map { row ->
+                WalkSummaryResponse(
+                    id = row[WalksTable.id].toString(),
+                    type = row[WalksTable.type],
+                    status = row[WalksTable.status],
+                    requestedStartTime = row[WalksTable.requestedStartTime],
+                    estimatedDistanceMeters = row[WalksTable.estimatedDistanceMeters],
+                    estimatedDurationSeconds = row[WalksTable.estimatedDurationSeconds],
+                    priceAmount = row[WalksTable.priceAmount],
+                    priceCurrency = row[WalksTable.priceCurrency]
+                )
+            }
+    }
+
+    fun findWalkDetailByWalker(walkerUserId: UUID, walkId: UUID): WalkDetailResponse? = transaction {
+        val row = WalksTable
+            .selectAll()
+            .where { (WalksTable.id eq walkId) and (WalksTable.walkerId eq walkerUserId) }
+            .singleOrNull()
+            ?: return@transaction null
+
+        val petIds = WalkPetsTable.selectAll().where { WalkPetsTable.walkId eq walkId }.map { it[WalkPetsTable.petId] }
+        val paymentIds = WalkPaymentMethodsTable.selectAll().where { WalkPaymentMethodsTable.walkId eq walkId }
+            .map { it[WalkPaymentMethodsTable.paymentMethodId] }
+
+        rowToDetail(row, petIds, paymentIds)
+    }
+
+    fun updateStatusForWalker(
+        walkerUserId: UUID,
+        walkId: UUID,
+        fromStatus: WalkStatus,
+        toStatus: WalkStatus,
+        setActualStartTime: Boolean = false,
+        setActualEndTime: Boolean = false
+    ): WalkDetailResponse? = transaction {
+        val now = nowUtc()
+
+        val updated = WalksTable.update(
+            where = {
+                (WalksTable.id eq walkId) and
+                        (WalksTable.walkerId eq walkerUserId) and
+                        (WalksTable.status eq fromStatus)
+            }
+        ) { row ->
+            row[status] = toStatus
+            row[updatedAt] = now
+
+            if (setActualStartTime) row[actualStartTime] = now
+            if (setActualEndTime) row[actualEndTime] = now
+
+            row[WalksTable.chatThreadId] = coalesce(WalksTable.chatThreadId, stringLiteral(walkId.toString()))
+            row[WalksTable.trackingId] = coalesce(WalksTable.trackingId, stringLiteral(walkId.toString()))
+        }
+
+        if (updated == 0) return@transaction null
+
+        findWalkDetailByWalker(walkerUserId, walkId)
+    }
+
+    fun isUserRelatedToWalk(userId: UUID, walkId: UUID): Boolean = transaction {
+        val row = WalksTable
+            .select(WalksTable.clientId, WalksTable.walkerId)
+            .where { WalksTable.id eq walkId }
+            .singleOrNull()
+            ?: return@transaction false
+
+        val clientId = row[WalksTable.clientId]
+        val walkerId = row[WalksTable.walkerId]
+
+        userId == clientId || userId == walkerId
     }
 }

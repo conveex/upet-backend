@@ -1,5 +1,8 @@
 package com.upet.users
 
+import com.google.cloud.firestore.FieldValue
+import com.google.cloud.firestore.SetOptions
+import com.google.firebase.cloud.FirestoreClient
 import com.upet.data.db.tables.UsersTable
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
@@ -16,6 +19,19 @@ class UsersFcmRepository {
         val updated = UsersTable.update({ UsersTable.id eq userId }) {
             it[UsersTable.fcmToken] = token
             it[UsersTable.updatedAt] = nowUtc()
+        }
+
+        runCatching {
+            FirestoreClient.getFirestore()
+                .collection("users")
+                .document(userId.toString())
+                .set(
+                    mapOf(
+                        "fcmToken" to token,
+                        "updatedAt" to FieldValue.serverTimestamp()
+                    ),
+                    SetOptions.merge()
+                )
         }
         updated > 0
     }

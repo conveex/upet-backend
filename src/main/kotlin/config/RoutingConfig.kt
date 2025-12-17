@@ -4,6 +4,7 @@ import com.upet.auth.AuthController
 import com.upet.auth.AuthService
 import com.upet.auth.JwtProvider
 import com.upet.auth.authRoutes
+import com.upet.media.MediaFilesRepository
 import com.upet.notifications.NotificationService
 import com.upet.payments.ClientPaymentMethodRepository
 import com.upet.payments.ClientPaymentMethodsController
@@ -21,6 +22,12 @@ import com.upet.routes.dbHealthRoutes
 import com.upet.routes.firebaseHealthRoutes
 import com.upet.routes.healthRoutes
 import com.upet.routes.mapsHealthRoutes
+import com.upet.tracking.FirestoreTrackingRepository
+import com.upet.tracking.TrackingAccessService
+import com.upet.tracking.TrackingController
+import com.upet.tracking.TrackingService
+import com.upet.tracking.WalkTrackSummariesRepository
+import com.upet.tracking.trackingRoutes
 import com.upet.users.UserRepository
 import com.upet.users.UsersController
 import com.upet.users.UsersFcmController
@@ -36,8 +43,11 @@ import com.upet.walks.DummyRouteProvider
 import com.upet.walks.GoogleDirectionsRouteProvider
 import com.upet.walks.RouteProvider
 import com.upet.walks.WalkController
+import com.upet.walks.WalkExecutionController
+import com.upet.walks.WalkExecutionService
 import com.upet.walks.WalkRepository
 import com.upet.walks.WalkService
+import com.upet.walks.walkExecutionRoutes
 import com.upet.walks.walkRoutes
 import io.ktor.client.HttpClient
 import io.ktor.server.application.Application
@@ -90,6 +100,24 @@ fun Application.configureRouting(httpClient: HttpClient) {
     val walkService = WalkService(walkRepository, routeProvider, usersFcmRepository, notificationService)
     val walkController = WalkController(walkService)
 
+    val mediaFilesRepository = MediaFilesRepository()
+    val summariesRepo = WalkTrackSummariesRepository()
+    val firestoreTrackingRepo = FirestoreTrackingRepository()
+
+    val trackingService = TrackingService(firestoreTrackingRepo, summariesRepo)
+    val trackingAccessService = TrackingAccessService(walkRepository, summariesRepo)
+
+    val walkExecutionService = WalkExecutionService(
+        walkRepository = walkRepository,
+        mediaFilesRepository = mediaFilesRepository,
+        trackingService = trackingService,
+        usersFcmRepository = usersFcmRepository,
+        notificationService = notificationService
+    )
+
+    val walkExecutionController = WalkExecutionController(walkService, walkExecutionService)
+    val trackingController = TrackingController(trackingService, trackingAccessService)
+
     routing {
         healthRoutes()
         dbHealthRoutes()
@@ -109,5 +137,8 @@ fun Application.configureRouting(httpClient: HttpClient) {
         walkerPaymentMethodsRoutes(walkerPaymentMethodsController)
 
         walkRoutes(walkController)
+
+        walkExecutionRoutes(walkExecutionController)
+        trackingRoutes(trackingController)
     }
 }

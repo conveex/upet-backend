@@ -1,11 +1,13 @@
 package com.upet.data.db
 
 import com.upet.data.db.tables.ClientPaymentMethodsTable
+import com.upet.data.db.tables.MediaFilesTable
 import com.upet.data.db.tables.PaymentMethodsTable
 import com.upet.data.db.tables.PetsTable
 import com.upet.data.db.tables.UsersTable
 import com.upet.data.db.tables.WalkPaymentMethodsTable
 import com.upet.data.db.tables.WalkPetsTable
+import com.upet.data.db.tables.WalkTrackSummariesTable
 import com.upet.data.db.tables.WalkerPaymentMethodsTable
 import com.upet.data.db.tables.WalkerProfilesTable
 import com.upet.data.db.tables.WalksTable
@@ -54,7 +56,9 @@ object DatabaseFactory {
                 WalkerPaymentMethodsTable,
                 WalksTable,
                 WalkPaymentMethodsTable,
-                WalkPetsTable
+                WalkPetsTable,
+                MediaFilesTable,
+                WalkTrackSummariesTable
             )
         }
     }

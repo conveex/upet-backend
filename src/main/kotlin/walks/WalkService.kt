@@ -144,4 +144,10 @@ class WalkService(
 
         return accepted
     }
+
+    fun getActiveSummariesByClient(clientId: UUID) =
+        walkRepository.findActiveSummariesByClient(clientId)
+
+    fun getActiveSummariesByWalker(walkerUserId: UUID) =
+        walkRepository.findActiveSummariesByWalker(walkerUserId)
 }
