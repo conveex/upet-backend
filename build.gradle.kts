@@ -1,3 +1,4 @@
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 val kotlin_version: String by project
 val logback_version: String by project
 
@@ -48,7 +49,6 @@ dependencies {
     runtimeOnly("org.flywaydb:flyway-database-postgresql:11.18.0")
 
     implementation("com.google.firebase:firebase-admin:9.3.0")
-
     implementation("at.favre.lib:bcrypt:0.10.2")
 
     testImplementation("io.ktor:ktor-server-test-host")
@@ -69,4 +69,20 @@ ktor {
 
 kotlin {
     jvmToolchain(17)
+}
+
+tasks.withType<ShadowJar>().configureEach {
+    // Permite fusionar registros de servicios repetidos.
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
+
+    // Fusiona META-INF/services para gRPC, Firestore y otras librerías.
+    mergeServiceFiles()
+
+    // Evita duplicar otros archivos que no necesitan fusionarse.
+    filesNotMatching("META-INF/services/**") {
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    }
+
+    // Excluye firmas inválidas después de combinar dependencias.
+    exclude("META-INF/*.SF", "META-INF/*.DSA", "META-INF/*.RSA")
 }
