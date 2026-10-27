@@ -4,6 +4,7 @@ import com.upet.auth.AuthController
 import com.upet.auth.AuthService
 import com.upet.auth.JwtProvider
 import com.upet.auth.authRoutes
+import com.upet.auth.firebaseCustomTokenRoutes
 import com.upet.media.MediaFilesRepository
 import com.upet.notifications.NotificationService
 import com.upet.payments.ClientPaymentMethodRepository
@@ -125,6 +126,7 @@ fun Application.configureRouting(httpClient: HttpClient) {
         mapsHealthRoutes(routeProvider, !apiKey.isNullOrBlank())
 
         authRoutes(authController)
+        firebaseCustomTokenRoutes(userRepository)
         walkerAdminRoutes(walkerAdminController)
         paymentMethodRoutes(paymentMethodRepository)
 
